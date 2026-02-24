@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Adiciona o caminho da pasta app ao Python path
+# Adds the app folder path to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
 from app.utils.json_handler import JSONHandler

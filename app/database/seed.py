@@ -15,38 +15,33 @@ class DataSeeder:
             return
         
         try:
-            # Criar tabelas
+            # Create tables
             TableCreator.create_tables(cursor)
             
-            # Limpar tabelas existentes (ordem correta por causa das chaves estrangeiras)
+            # Clear existing tables (in the correct order because of foreign keys)
             cursor.execute("TRUNCATE TABLE character_episodes RESTART IDENTITY CASCADE")
             cursor.execute("TRUNCATE TABLE characters RESTART IDENTITY CASCADE")
             cursor.execute("TRUNCATE TABLE episodes RESTART IDENTITY CASCADE")
             cursor.execute("TRUNCATE TABLE locations RESTART IDENTITY CASCADE")
             
-            # ============= SEED LOCATIONS (PRIMEIRO) =============
+            # ============= SEED LOCATIONS =============
             print("\n--- Processando Localizações ---")
             locations = self.json_handler.ler_json('allLocations (1).json')
             location_map = {}  # URL -> ID
             
             if locations:
-                # Ordenar locations por ID para inserir na ordem correta
+                # Sort by API ID
                 locations_ordenadas = sorted(locations, key=lambda x: x['id'])
                 
                 for loc in locations_ordenadas:
                     cursor.execute("""
-                        INSERT INTO locations (
-                            id, name, type, dimension, url, created, residents, data
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        INSERT INTO locations (id, name, type, dimension)
+                        VALUES (%s, %s, %s, %s)
                     """, (
-                        loc['id'],  # Usa o ID original da API
+                        loc['id'],           # Use the API ID
                         loc.get('name'),
                         loc.get('type'),
-                        loc.get('dimension'),
-                        loc.get('url'),
-                        loc.get('created'),
-                        json.dumps(loc.get('residents', [])),
-                        json.dumps(loc)
+                        loc.get('dimension')
                     ))
                     
                     location_map[loc.get('url')] = loc['id']
@@ -56,28 +51,24 @@ class DataSeeder:
             else:
                 print("❌ Nenhuma localização encontrada!")
             
-            # ============= SEED EPISODES (SEGUNDO) =============
+            # ============= SEED EPISODES =============
             print("\n--- Processando Episódios ---")
             episodes = self.json_handler.ler_json('allEpisodesUpdated (1).json')
             episode_map = {}  # URL -> ID
             
             if episodes:
-                # Ordenar episódios por ID
+                # Sort by API ID
                 episodes_ordenados = sorted(episodes, key=lambda x: x['id'])
                 
                 for ep in episodes_ordenados:
                     cursor.execute("""
-                        INSERT INTO episodes (
-                            id, name, air_date, episode, url, created, data
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        INSERT INTO episodes (id, name, air_date, episode)
+                        VALUES (%s, %s, %s, %s)
                     """, (
-                        ep['id'],  # Usa o ID original da API
+                        ep['id'],             # Use the API ID
                         ep.get('name'),
                         ep.get('air_date'),
-                        ep.get('episode'),
-                        ep.get('url'),
-                        ep.get('created'),
-                        json.dumps(ep)
+                        ep.get('episode')
                     ))
                     
                     episode_map[ep.get('url')] = ep['id']
@@ -87,49 +78,44 @@ class DataSeeder:
             else:
                 print("❌ Nenhum episódio encontrado!")
             
-            # ============= SEED CHARACTERS (TERCEIRO) =============
+            # ============= SEED CHARACTERS =============
             print("\n--- Processando Personagens ---")
             characters = self.json_handler.ler_json('allCharsUpdated (3) (2).json')
             character_map = {}  # URL -> ID
             
             if characters:
-                # Ordenar personagens por ID
+                # Sort by API ID
                 characters_ordenados = sorted(characters, key=lambda x: x['id'])
                 
                 for char in characters_ordenados:
-                    # Pegar URLs das localizações
+                    # Get source and location data
                     origin_data = char.get('origin', {})
                     location_data = char.get('location', {})
                     
                     origin_url = origin_data.get('url') if origin_data else None
                     location_url = location_data.get('url') if location_data else None
                     
-                    # Buscar IDs das localizações no mapa
+                    # Search location IDs
                     origin_id = location_map.get(origin_url) if origin_url and origin_url != '' else None
                     location_id = location_map.get(location_url) if location_url and location_url != '' else None
                     
                     cursor.execute("""
                         INSERT INTO characters (
-                            id, name, status, species, type, gender,
-                            image, url, created, 
-                            origin_id, location_id,
-                            origin, location, data
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            id, name, status, species, type, gender, image,
+                            origin_id, location_id, origin, location
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
-                        char['id'],  # Usa o ID original da API
+                        char['id'],           # Use the API ID
                         char.get('name'),
                         char.get('status'),
                         char.get('species'),
                         char.get('type', ''),
                         char.get('gender'),
                         char.get('image'),
-                        char.get('url'),
-                        char.get('created'),
                         origin_id,
                         location_id,
                         json.dumps(origin_data),
-                        json.dumps(location_data),
-                        json.dumps(char)
+                        json.dumps(location_data)
                     ))
                     
                     character_map[char.get('url')] = char['id']
@@ -139,7 +125,7 @@ class DataSeeder:
             else:
                 print("❌ Nenhum personagem encontrado!")
             
-            # ============= SEED CHARACTER_EPISODES (RELACIONAMENTOS) =============
+            # ============= SEED CHARACTER_EPISODES =============
             print("\n--- Processando Relacionamentos Personagem-Episódio ---")
             relacionamentos = 0
             
@@ -148,15 +134,15 @@ class DataSeeder:
                     character_id = character_map.get(char.get('url'))
                     if character_id and 'episode' in char and char['episode']:
                         for episode_url in char['episode']:
-                            # Extrair o ID do episódio da URL
-                            # URL exemplo: https://rickandmortyapi.com/api/episode/1
+                            # Extract the episode ID from the URL
+                           
                             episode_id = None
                             if episode_url:
-                                # Tenta extrair o ID da URL
                                 try:
+                                    # Try to extract the ID from the URLL
                                     episode_id = int(episode_url.split('/')[-1])
                                 except:
-                                    # Se não conseguir, tenta pelo mapa
+                                    # If you can't, try using the map
                                     episode_id = episode_map.get(episode_url)
                             
                             if episode_id:
@@ -187,8 +173,8 @@ class DataSeeder:
             print(f"   • Personagens: {len(characters) if characters else 0}")
             print(f"   • Relacionamentos: {relacionamentos}")
             
-            # Mostrar primeiros IDs para verificar
-            print(f"\n🔍 PRIMEIROS REGISTROS:")
+            # Mostrar primeiros registros para verificar
+            print(f"\n🔍 PRIMEIROS PERSONAGENS:")
             cursor.execute("SELECT id, name FROM characters ORDER BY id LIMIT 5")
             for row in cursor.fetchall():
                 print(f"   ID {row[0]}: {row[1]}")
