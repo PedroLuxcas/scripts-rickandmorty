@@ -35,8 +35,6 @@ class TableCreator:
                 image TEXT,
                 origin_id INTEGER,
                 location_id INTEGER,
-                origin JSONB,
-                location JSONB,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (origin_id) REFERENCES locations(id) ON DELETE SET NULL,
                 FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL

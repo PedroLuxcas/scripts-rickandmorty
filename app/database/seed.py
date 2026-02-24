@@ -102,8 +102,8 @@ class DataSeeder:
                     cursor.execute("""
                         INSERT INTO characters (
                             id, name, status, species, type, gender, image,
-                            origin_id, location_id, origin, location
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            origin_id, location_id
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         char['id'],           # Uses API ID
                         char.get('name'),
@@ -113,9 +113,7 @@ class DataSeeder:
                         char.get('gender'),
                         char.get('image'),
                         origin_id,
-                        location_id,
-                        json.dumps(origin_data),
-                        json.dumps(location_data)
+                        location_id
                     ))
                     
                     character_map[char.get('url')] = char['id']
