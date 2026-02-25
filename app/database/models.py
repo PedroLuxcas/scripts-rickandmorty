@@ -43,14 +43,12 @@ class TableCreator:
         
         # ============= CHARACTER_EPISODES TABLE (composite key) =============
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS character_episodes (
-                character_id INTEGER NOT NULL,
-                episode_id INTEGER NOT NULL,
+            CREATE TABLE character_episode (
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (character_id, episode_id),
-                FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-                FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
-            )
+                character_id INT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+                episode_id INT NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+                PRIMARY KEY (character_id, episode_id)
+            );
         """)
         
         # ============= INDEXES FOR BETTER PERFORMANCE =============

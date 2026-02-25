@@ -146,7 +146,7 @@ class DataSeeder:
                             if episode_id:
                                 try:
                                     cursor.execute("""
-                                        INSERT INTO character_episodes (character_id, episode_id)
+                                        INSERT INTO character_episode (character_id, episode_id)
                                         VALUES (%s, %s)
                                         ON CONFLICT (character_id, episode_id) DO NOTHING
                                     """, (character_id, episode_id))
