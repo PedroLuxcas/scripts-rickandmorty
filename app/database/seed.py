@@ -1,8 +1,8 @@
 import json
 import os
-from database.connection import DatabaseConnection
-from database.models import TableCreator
-from utils.json_handler import JSONHandler
+from app.database.connection import DatabaseConnection
+from app.database.models import TableCreator
+from app.utils.json_handler import JSONHandler
 
 class DataSeeder:
     def __init__(self):
